@@ -8,3 +8,4 @@ CTCSpeechRecognition.iml
 *.log.eps
 *.t7
 Seq2Seq/
+prepare_datasets/an4*
