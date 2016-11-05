@@ -24,8 +24,10 @@ local img = image.load(opt.imagePath, 1, 'float')
 img = img[1]
 
 -- normalize the data
-local mean = img:mean()
-local std = img:std()
+-- local mean = img:mean()
+-- std = img:std()
+local mean = 0.5
+local std = 1
 img:add(-mean)
 img:div(std)
 
