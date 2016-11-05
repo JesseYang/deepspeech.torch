@@ -22,13 +22,13 @@ end
 local function deepSpeech(opt)
     local conv = nn.Sequential()
     -- (nInputPlane, nOutputPlane, kW, kH, [dW], [dH], [padW], [padH]) conv layers.
-    conv:add(nn.SpatialConvolution(1, 32, 11, 41, 2, 2))
+    conv:add(nn.SpatialConvolution(1, 32, 9, 9, 1, 1))
     conv:add(nn.SpatialBatchNormalization(32))
     conv:add(nn.Clamp(0, 20))
-    conv:add(nn.SpatialConvolution(32, 32, 11, 21, 2, 1))
+    conv:add(nn.SpatialConvolution(32, 32, 9, 9, 1, 1))
     conv:add(nn.SpatialBatchNormalization(32))
     conv:add(nn.Clamp(0, 20))
-    local rnnInputsize = 32 * 41 -- based on the above convolutions and 16khz audio.
+    local rnnInputsize = 32 * 44 -- based on the above convolutions and 16khz audio.
     local rnnHiddenSize = opt.hiddenSize -- size of rnn hidden layers
     local nbOfHiddenLayers = opt.nbOfHiddenLayers
 
@@ -47,7 +47,7 @@ local function deepSpeech(opt)
 
     local fullyConnected = nn.Sequential()
     fullyConnected:add(nn.BatchNormalization(rnnHiddenSize))
-    fullyConnected:add(nn.Linear(rnnHiddenSize, 29))
+    fullyConnected:add(nn.Linear(rnnHiddenSize, 23))
 
     local model = nn.Sequential()
     model:add(conv)
@@ -60,8 +60,8 @@ end
 
 -- Based on convolution kernel and strides.
 local function calculateInputSizes(sizes)
-    sizes = torch.floor((sizes - 11) / 2 + 1) -- conv1
-    sizes = torch.floor((sizes - 11) / 2 + 1) -- conv2
+    sizes = torch.floor((sizes - 9) + 1) -- conv1
+    sizes = torch.floor((sizes - 9) + 1) -- conv2
     return sizes
 end
 

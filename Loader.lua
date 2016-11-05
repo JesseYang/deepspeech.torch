@@ -12,19 +12,19 @@ local indexer = torch.class('indexer')
 
 function indexer:__init(dirPath, batchSize)
 
-    local dbSpect = lmdb.env { Path = dirPath .. '/spect', Name = 'spect' }
-    local dbTrans = lmdb.env { Path = dirPath .. '/trans', Name = 'trans' }
+    local dbImages = lmdb.env { Path = dirPath .. '/images', Name = 'images' }
+    local dbLabels = lmdb.env { Path = dirPath .. '/labels', Name = 'labels' }
 
     self.batchSize = batchSize
     self.count = 1
     -- get the size of lmdb
-    dbSpect:open()
-    dbTrans:open()
-    local audioLMDBSize = dbSpect:stat()['entries']
-    local transcriptLMDBSize = dbTrans:stat()['entries']
+    dbImages:open()
+    dbLabels:open()
+    local audioLMDBSize = dbImages:stat()['entries']
+    local transcriptLMDBSize = dbLabels:stat()['entries']
     self.size = audioLMDBSize
-    dbSpect:close()
-    dbTrans:close()
+    dbImages:close()
+    dbLabels:close()
     self.nbOfBatches = math.ceil(self.size / self.batchSize)
     assert(audioLMDBSize == transcriptLMDBSize, 'Audio and transcript LMDBs had different lengths!')
     assert(self.size > self.batchSize, 'batchSize larger than lmdb size!')
@@ -48,11 +48,11 @@ end
 local Loader = torch.class('Loader')
 
 function Loader:__init(dirPath, mapper)
-    self.dbSpect = lmdb.env { Path = dirPath .. '/spect', Name = 'spect' }
-    self.dbTrans = lmdb.env { Path = dirPath .. '/trans', Name = 'trans' }
-    self.dbSpect:open()
-    self.size = self.dbSpect:stat()['entries']
-    self.dbSpect:close()
+    self.dbImages = lmdb.env { Path = dirPath .. '/images', Name = 'images' }
+    self.dbLabels = lmdb.env { Path = dirPath .. '/labels', Name = 'labels' }
+    self.dbImages:open()
+    self.size = self.dbImages:stat()['entries']
+    self.dbImages:close()
     self.mapper = mapper
 end
 
@@ -64,8 +64,8 @@ function Loader:nextBatch(indices)
     local maxLength = 0
     local freq = 0
 
-    self.dbSpect:open(); local readerSpect = self.dbSpect:txn(true) -- readonly
-    self.dbTrans:open(); local readerTrans = self.dbTrans:txn(true)
+    self.dbImages:open(); local readerSpect = self.dbImages:txn(true) -- readonly
+    self.dbLabels:open(); local readerTrans = self.dbLabels:txn(true)
 
     local size = indices:size(1)
 
@@ -92,8 +92,8 @@ function Loader:nextBatch(indices)
         inputs[ind][1]:narrow(2, 1, tensor:size(2)):copy(tensor)
     end
 
-    readerSpect:abort(); self.dbSpect:close()
-    readerTrans:abort(); self.dbTrans:close()
+    readerSpect:abort(); self.dbImages:close()
+    readerTrans:abort(); self.dbLabels:close()
 
     return inputs, targets, sizes, transcripts
 end

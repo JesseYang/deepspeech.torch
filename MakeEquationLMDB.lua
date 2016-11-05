@@ -37,70 +37,65 @@ local function closeWriter(db, txn)
     db:close()
 end
 
-local function createLMDB(dataPath, lmdbPath, id)
+local function createLMDB(dataPath, lmdbPath)
     local vecs = tds.Vec()
-    local sortIdsPath = 'sort_ids_'.. id .. '.t7' -- in case of crash, sorted ids are saved
 
     local function file_exists(name)
         local f = io.open(name, "r")
         if f ~= nil then io.close(f) return true else return false end
     end
 
-    if not file_exists(sortIdsPath) then
-        local size = tonumber(sys.execute("find " .. dataPath .. " -type f -name '*'" .. extension .. " | wc -l "))
-        vecs:resize(size)
+    local size = tonumber(sys.execute("find " .. dataPath .. " -type f -name '*'" .. extension .. " | wc -l "))
+    vecs:resize(size)
 
-        local files = io.popen("find -L " .. dataPath .. " -type f -name '*" .. extension .. "'")
-        local counter = 1
-        print("Retrieving sizes for sorting...")
-        local buffer = tds.Vec()
-        buffer:resize(size)
+    local files = io.popen("find -L " .. dataPath .. " -type f -name '*" .. extension .. "'")
+    local counter = 1
+    print("Retrieving sizes for sorting...")
+    local buffer = tds.Vec()
+    buffer:resize(size)
 
-        for file in files:lines() do
-            buffer[counter] = file
-            counter = counter + 1
-        end
-
-        local function getSize(opts)
-            local imageFilePath = opts.file
-            local labelFilePath = opts.file:gsub(opts.extension, ".txt")
-            local opt = opts.opt
-            local imageFile = image.load(imageFilePath, 1)
-            local length = imageFile:size()[2]
-            return { imageFilePath, labelFilePath, length }
-        end
-
-        for x = 1, opt.processes do
-            local opts = { extension = extension, file = buffer[x], opt = opt }
-            parallel.children[x]:send({ opts, getSize })
-        end
-
-        local processCounter = 1
-        for x = 1, size do
-            local result = parallel.children[processCounter]:receive()
-            vecs[x] = tds.Vec(unpack(result))
-            xlua.progress(x, size)
-            if x % 1000 == 0 then collectgarbage() end
-            -- send next index to retrieve
-            if x + opt.processes <= size then
-                local opts = { extension = extension, file = buffer[x + opt.processes], opt = opt }
-                parallel.children[processCounter]:send({ opts, getSize })
-            end
-            if processCounter == opt.processes then
-                processCounter = 1
-            else
-                processCounter = processCounter + 1
-            end
-        end
-        print("Sorting...")
-        -- sort the files by length
-        local function comp(a, b) return a[3] < b[3] end
-
-        vecs:sort(comp)
-        torch.save(sortIdsPath, vecs)
-    else
-        vecs = torch.load(sortIdsPath)
+    for file in files:lines() do
+        buffer[counter] = file
+        counter = counter + 1
     end
+
+    local function getSize(opts)
+        local imageFilePath = opts.file
+        local labelFilePath = opts.file:gsub(opts.extension, ".txt")
+        local opt = opts.opt
+        local imageFile = image.load(imageFilePath, 1)
+        local length = imageFile:size()[3]
+        return { imageFilePath, labelFilePath, length }
+    end
+
+    for x = 1, opt.processes do
+        local opts = { extension = extension, file = buffer[x], opt = opt }
+        parallel.children[x]:send({ opts, getSize })
+    end
+
+    local processCounter = 1
+    for x = 1, size do
+        local result = parallel.children[processCounter]:receive()
+        vecs[x] = tds.Vec(unpack(result))
+        xlua.progress(x, size)
+        if x % 1000 == 0 then collectgarbage() end
+        -- send next index to retrieve
+        if x + opt.processes <= size then
+            local opts = { extension = extension, file = buffer[x + opt.processes], opt = opt }
+            parallel.children[processCounter]:send({ opts, getSize })
+        end
+        if processCounter == opt.processes then
+            processCounter = 1
+        else
+            processCounter = processCounter + 1
+        end
+    end
+    print("Sorting...")
+    -- sort the files by length
+    local function comp(a, b) return a[3] < b[3] end
+
+    vecs:sort(comp)
+
     local size = #vecs
 
     print("Creating LMDB dataset to: " .. lmdbPath)
@@ -111,12 +106,16 @@ local function createLMDB(dataPath, lmdbPath, id)
     local function getData(opts)
         local opt = opts.opt
         local imageData = image.load(opts.imageFilePath, 1, 'float')
+        -- Dimension of image data loaded by image.load  is 1 * height * width, but we want it to be 2D (height * width)
+        imageData = imageData[1]
 
         -- put into lmdb
 
         -- normalize the data
-        local mean = imageData:mean()
-        local std = imageData:std()
+        -- local mean = imageData:mean()
+        -- local std = imageData:std()
+        local mean = 0.5
+        local std = 1
         imageData:add(-mean)
         imageData:div(std)
 
@@ -180,8 +179,8 @@ function parent()
 
     parallel.children:exec(looper)
 
-    createLMDB(dataPath .. '/train', lmdbPath .. '/train', 'equ.train')
-    createLMDB(dataPath .. '/test', lmdbPath .. '/test', 'equ.test')
+    createLMDB(dataPath .. '/train', lmdbPath .. '/train')
+    createLMDB(dataPath .. '/test', lmdbPath .. '/test')
     parallel.close()
 end
 
