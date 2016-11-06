@@ -53,7 +53,7 @@ function ModelEvaluator:runEvaluation(model, verbose, epoch)
     local numberOfSamples = 0
     -- ======================= for every test iteration ==========================
     for i = 1, self.nbOfTestIterations do
-        print("!!!!!!! " + tostring(i))
+        print("!!!!!!! " .. tostring(i))
         -- get buf and fetch next one
         self.pool:synchronize()
         local inputsCPU, targets, sizes_array = spect_buf, label_buf, sizes_buf
@@ -77,7 +77,7 @@ function ModelEvaluator:runEvaluation(model, verbose, epoch)
             local predict_tokens = self.mapper:decodeOutput(prediction)
             local targetTranscript = self.mapper:tokensToText(targets[j])
             local predictTranscript = self.mapper:tokensToText(predict_tokens)
-            print("AAAAAAAAAAAAAAAA " + tostring(size))
+            print("AAAAAAAAAAAAAAAA " .. tostring(size))
             print(targetTranscript)
             print(predictTranscript)
 
