@@ -71,6 +71,8 @@ function ModelEvaluator:runEvaluation(model, verbose, epoch)
         local predictions = model:forward(self.input)
         if self.isGPU then cutorch.synchronize() end
 
+        print(sizes_array)
+        print(predictions:size())
         local size = predictions:size(1)
         for j = 1, size do
             local prediction = predictions[j]
