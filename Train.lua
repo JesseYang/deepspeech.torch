@@ -45,7 +45,7 @@ local optimParams = {
 --Create and train the network based on the parameters and training data.
 Network:init(opt)
 
-Network:trainNetwork(opt.epochs, optimParams)
+Network:trainNetwork(opt.epochs, optimParams, opt)
 
 --Creates the loss plot.
 Network:createLossGraph()

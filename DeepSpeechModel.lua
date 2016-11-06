@@ -73,7 +73,7 @@ local function deepSpeech(opt)
 end
 
 -- Based on convolution kernel and strides.
-local function calculateInputSizes(sizes)
+local function calculateInputSizes(sizes, opt)
     for x = 1, #opt.cnn.kernel_heights do
         sizes = sizes - opt.cnn.kernel_heights[x] + 1
     end

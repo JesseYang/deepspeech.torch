@@ -80,7 +80,7 @@ function Network:testNetwork(epoch)
     return wer, cer
 end
 
-function Network:trainNetwork(epochs, optimizerParams)
+function Network:trainNetwork(epochs, optimizerParams, opt)
     self.model:training()
 
     local lossHistory = {}
@@ -129,7 +129,7 @@ function Network:trainNetwork(epochs, optimizerParams)
             end)
 
         inputs:resize(inputsCPU:size()):copy(inputsCPU) -- transfer over to GPU
-        sizes = self.calSize(sizes)
+        sizes = self.calSize(sizes, opt)
         local predictions = self.model:forward(inputs)
         local loss = criterion:forward(predictions, targets, sizes)
         if loss == math.huge then loss = 0 print("Recieved an inf cost!") end
