@@ -71,12 +71,13 @@ function ModelEvaluator:runEvaluation(model, verbose, epoch)
         local predictions = model:forward(self.input)
         if self.isGPU then cutorch.synchronize() end
 
-        print(sizes_array)
-        print(predictions:size())
+        local input_length = input:size(4)
+        local pred_length = predictions:size(2)
+        local shrink = input_length - pred_length
         local size = predictions:size(1)
         for j = 1, size do
             local prediction = predictions[j]
-            local predict_tokens = self.mapper:decodeOutput(prediction)
+            local predict_tokens = self.mapper:decodeOutput(prediction:narrow(1, 1, sizes[j] - shrink))
             local targetTranscript = self.mapper:tokensToText(targets[j])
             local predictTranscript = self.mapper:tokensToText(predict_tokens)
             print("AAAAAAAAAAAAAAAA " .. tostring(size))
