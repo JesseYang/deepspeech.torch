@@ -1,4 +1,5 @@
 local Network = require 'Network'
+local json = require 'json'
 
 -- Options can be overrided on command line run.
 local cmd = torch.CmdLine()
@@ -22,11 +23,15 @@ cmd:option('-maxNorm', 400, 'Max norm used to normalize gradients')
 cmd:option('-momentum', 0.90, 'Momentum for SGD')
 cmd:option('-batchSize', 11, 'Batch size in training')
 cmd:option('-validationBatchSize', 4, 'Batch size for validation')
-cmd:option('-LSTM', false, 'Use LSTMs rather than RNNs')
-cmd:option('-hiddenSize', 1760, 'RNN hidden sizes')
-cmd:option('-nbOfHiddenLayers', 7, 'Number of rnn layers')
+-- cmd:option('-LSTM', false, 'Use LSTMs rather than RNNs')
+-- cmd:option('-hiddenSize', 1760, 'RNN hidden sizes')
+-- cmd:option('-nbOfHiddenLayers', 7, 'Number of rnn layers')
 
 local opt = cmd:parse(arg)
+
+local net_opt = json.load('params.json')
+
+for k,v in pairs(net_opt) do opt[k] = v end
 
 --Parameters for the stochastic gradient descent (using the optim library).
 local optimParams = {
