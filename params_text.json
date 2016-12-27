@@ -8,7 +8,7 @@
   },
   "rnn": {
     "hiddenSize": 1760,
-    "nbOfHiddenLayers": 7,
+    "nbOfHiddenLayers": 3,
     "LSTM": false
   },
   "label_size": 23
