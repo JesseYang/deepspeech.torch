@@ -27,9 +27,10 @@ function indexer:__init(dirPath, batchSize)
     dbLabels:close()
     self.nbOfBatches = math.ceil(self.size / self.batchSize)
     assert(audioLMDBSize == transcriptLMDBSize, 'Audio and transcript LMDBs had different lengths!')
-    assert(self.size > self.batchSize, 'batchSize larger than lmdb size!')
+    assert(self.size >= self.batchSize, 'batchSize larger than lmdb size!')
 
     self.inds = torch.range(1, self.size):split(batchSize)
+
     self.batchIndices = torch.range(1, self.nbOfBatches)
 end
 
