@@ -62,8 +62,13 @@ function Network:init(opt)
     self.pool = threads.Threads(1, function() require 'Loader' end)
 
     self.logger = optim.Logger(self.logsTrainPath .. 'train' .. suffix .. '.log')
-    self.logger:setNames { 'loss', 'WER', 'CER' }
-    self.logger:style { '-', '-', '-' }
+    if opt.testAfterEachEpoch then
+        self.logger:setNames { 'learning_rate', 'loss', 'WER', 'CER' }
+        self.logger:style { '-', '-', '-', '-' }
+    else
+        self.logger:setNames { 'learning_rate', 'loss' }
+        self.logger:style { '-', '-' }
+    end
 end
 
 function Network:prepSpeechModel(modelName, opt)
@@ -163,18 +168,30 @@ function Network:trainNetwork(epochs, optimizerParams, opt)
 
         averageLoss = averageLoss / self.indexer.nbOfBatches -- Calculate the average loss at this epoch.
 
-        -- anneal learningRate
-        optimizerParams.learningRate = optimizerParams.learningRate / (optimizerParams.learningRateAnnealing or 1)
-
         -- Update validation error rates
-        local wer, cer = self:testNetwork(i)
+        local wer, cer
+        if opt.testAfterEachEpoch then
+            wer, cer = self:testNetwork(i)
+        end
 
-        print(string.format("Training Epoch: %d Average Loss: %f Average Validation WER: %.2f Average Validation CER: %.2f",
-            i, averageLoss, 100 * wer, 100 * cer))
+        print(string.format("Learning rate: %e", optimizerParams.learningRate))
+        if wer ~= null then
+            print(string.format("Training Epoch: %d Average Loss: %f Average Validation WER: %.2f Average Validation CER: %.2f",
+                i, averageLoss, 100 * wer, 100 * cer))
+        else
+            print(string.format("Training Epoch: %d Average Loss: %f", i, averageLoss))
+        end
 
         table.insert(lossHistory, averageLoss) -- Add the average loss value to the logger.
-        table.insert(validationHistory, 100 * wer)
-        self.logger:add { averageLoss, 100 * wer, 100 * cer }
+        if wer ~= null then
+            table.insert(validationHistory, 100 * wer)
+            self.logger:add { optimizerParams.learningRate, averageLoss, 100 * wer, 100 * cer }
+        else
+            self.logger:add { optimizerParams.learningRate, averageLoss }
+        end
+
+        -- anneal learningRate
+        optimizerParams.learningRate = optimizerParams.learningRate / (optimizerParams.learningRateAnnealing or 1)
 
         -- periodically save the model
         if self.saveModelInTraining and i % self.saveModelIterations == 0 then
