@@ -55,7 +55,7 @@ local function deepSpeech(opt)
     rnnModule = RNNModule(rnnHiddenSize, rnnHiddenSize, opt)
 
     for i = 1, nbOfHiddenLayers - 1 do
-        rnns:add(nn.Bottle(nn.BatchNormalization(rnnHiddenSize), 2))
+        -- rnns:add(nn.Bottle(nn.BatchNormalization(rnnHiddenSize), 2))
         rnns:add(rnnModule:clone())
     end
 

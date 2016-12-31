@@ -7,7 +7,7 @@
     "with_bn": true
   },
   "rnn": {
-    "hiddenSize": 660,
+    "hiddenSize": 440,
     "nbOfHiddenLayers": 2,
     "LSTM": false
   },
