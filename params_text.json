@@ -7,9 +7,9 @@
     "with_bn": true
   },
   "rnn": {
-    "hiddenSize": 440,
-    "nbOfHiddenLayers": 2,
+    "hiddenSize": 660,
+    "nbOfHiddenLayers": 3,
     "LSTM": false
   },
-  "label_size": 44
+  "label_size": 57
 }

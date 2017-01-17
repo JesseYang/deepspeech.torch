@@ -10,6 +10,7 @@ CTCSpeechRecognition.iml
 Seq2Seq/
 prepare_datasets/an4*
 prepare_datasets/equ*
+prepare_datasets/*zip
 prepare_datasets/text*
 .ipynb_checkpoints
 logs

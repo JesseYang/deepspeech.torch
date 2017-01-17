@@ -36,7 +36,7 @@ function mapper:decodeOutput(predictions)
             to compute WER we strip the begining and ending spaces
     --]]
     local tokens = {}
-    local blankToken = self.alphabet2token['$']
+    local blankToken = self.alphabet2token['`']
     local preToken = blankToken
     -- The prediction is a sequence of likelihood vectors
     local _, maxIndices = torch.max(predictions, 2)
